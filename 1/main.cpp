@@ -57,26 +57,3 @@ public:
         }
     }
 };
-
-int main() {
-    // Пример создания графа
-    int numVertices = 5;
-    Graph graph(numVertices);
-
-    // Добавление ребер (пример на основе загруженного изображения)
-    graph.addEdge(0, 2);
-    graph.addEdge(0, 3);
-    graph.addEdge(1, 4);
-    graph.addEdge(2, 4);
-    graph.addEdge(3, 2);
-    graph.addEdge(4, 5);
-
-    // Завершаем заполнение заголовков
-    graph.finalizeHeader();
-
-    // Печать графа
-    graph.printGraph();
-    graph.printAdjacency();
-
-    return 0;
-}
