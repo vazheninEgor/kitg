@@ -1,4 +1,4 @@
-# КИТГ
+# КиТГ
 
 В данном репозитории представлены реализации необходимых алгоритмов и структур данных. Он содержит 3 папки: [1](https://github.com/vazheninEgor/kitg/tree/main/1), [8](https://github.com/vazheninEgor/kitg/tree/main/8) и [15](https://github.com/vazheninEgor/kitg/tree/main/15), каждая относится к соответсвующей работе:  
 
