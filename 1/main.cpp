@@ -3,11 +3,13 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <list>
-#include <ctime>
+#include <chrono>
 #include <cstdlib>
 
+using namespace std;
 
-// Список ребер (дуг)
+
+// Список дуг
 class EdgeListGraph {
 public:
     std::vector<int> I; // Начальные вершины
@@ -20,7 +22,7 @@ public:
         vertices.insert(vertex);
     }
 
-    // Вставка ребра
+    // Вставка дуги
     void insertEdge(int from, int to, double weight) {
         I.push_back(from);
         J.push_back(to);
@@ -42,7 +44,7 @@ public:
         vertices.erase(vertex);
     }
 
-    // Удаление ребра по индексу
+    // Удаление дуги по индексу
     void removeEdge(int index) {
         if (index >= 0 && index < I.size()) {
             I.erase(I.begin() + index);
@@ -51,7 +53,7 @@ public:
         }
     }
 
-    // Удаление ребра по вершинам
+    // Удаление дуги по вершинам (удаляет все дуги с данными вершинами)
     void removeEdge(int from, int to) {
         for (int k = I.size() - 1; k >= 0; --k) {
             if (I[k] == from && J[k] == to) {
@@ -65,7 +67,7 @@ public:
         return vertices.find(vertex) != vertices.end();
     }
 
-    // Поиск ребра (возвращает индекс или -1)
+    // Поиск дуги (возвращает индекс или -1)
     int findEdge(int from, int to) {
         for (size_t k = 0; k < I.size(); ++k) {
             if (I[k] == from && J[k] == to) {
@@ -93,7 +95,6 @@ public:
     }
 };
 
-
 // Список пучков дуг
 class BundledEdgeListGraph {
 public:
@@ -113,7 +114,7 @@ public:
     void insertVertex(int vertex) {
         vertices.insert(vertex);
         if (vertex >= H.size()) {
-            H.resize(vertex + 1, -1);
+            H.resize(vertex + 1, -1); // Расширение массива голов при необходимости
         }
     }
 
@@ -123,9 +124,12 @@ public:
         I.push_back(from);
         J.push_back(to);
         weights.push_back(weight);
+
+        // Добавляем ссылку на предыдущую дугу
         L.push_back(H[from]);
         H[from] = edgeIndex;
 
+        // Добавляем вершины в набор, если их ещё нет
         insertVertex(from);
         insertVertex(to);
     }
@@ -135,7 +139,7 @@ public:
         if (index >= 0 && index < I.size()) {
             int from = I[index];
 
-            // Удаление дуги из списка H и L
+            // Удаление дуги из списка пучков
             if (H[from] == index) {
                 H[from] = L[index];
             } else {
@@ -147,13 +151,13 @@ public:
                 }
             }
 
-            // Удаление значений из массивов I, J, weights и L
+            // Удаление элементов из массивов
             I.erase(I.begin() + index);
             J.erase(J.begin() + index);
             weights.erase(weights.begin() + index);
             L.erase(L.begin() + index);
 
-            // Обновление массивов после удаления
+            // Обновление ссылок после удаления элемента
             for (int &link : L) {
                 if (link > index) {
                     --link;
@@ -178,7 +182,7 @@ public:
         }
 
         vertices.erase(vertex);
-        H[vertex] = -1;
+        H[vertex] = -1; // Обнуление головы списка для удалённой вершины
     }
 
     // Поиск вершины
@@ -186,7 +190,7 @@ public:
         return vertices.find(vertex) != vertices.end();
     }
 
-    // Поиск дуги
+    // Поиск дуги (возвращает индекс или -1)
     int findEdge(int from, int to) {
         for (int i = H[from]; i != -1; i = L[i]) {
             if (J[i] == to) {
@@ -214,37 +218,28 @@ public:
     }
 };
 
-
 // Список смежности
 class AdjacencyListGraph {
 public:
-    std::unordered_map<int, std::list<std::pair<int, double>>> adjList;
-    std::unordered_set<int> vertices;
+    std::unordered_map<int, std::list<std::pair<int, double>>> adjList; // Словарь списков смежности
+    std::unordered_set<int> vertices; // Набор уникальных вершин
 
-    // Конструктор по умолчанию
-    AdjacencyListGraph() = default;  // Теперь этот класс можно создавать без параметров
-
-    // Конструктор с параметром для задания числа вершин
-    AdjacencyListGraph(int numVertices) {
-        // Инициализация для заранее определённого числа вершин, если нужно
-        for (int i = 0; i < numVertices; ++i) {
-            vertices.insert(i);
-        }
-    }
-
+    // Вставка вершины
     void insertVertex(int vertex) {
         vertices.insert(vertex);
         if (adjList.find(vertex) == adjList.end()) {
-            adjList[vertex] = std::list<std::pair<int, double>>();
+            adjList[vertex] = std::list<std::pair<int, double>>(); // Инициализация списка для вершины
         }
     }
 
+    // Вставка дуги
     void insertEdge(int from, int to, double weight) {
         adjList[from].emplace_back(to, weight);
         insertVertex(from);
         insertVertex(to);
     }
 
+    // Удаление дуги
     void removeEdge(int from, int to) {
         if (adjList.find(from) != adjList.end()) {
             adjList[from].remove_if([to](const std::pair<int, double>& edge) {
@@ -253,6 +248,7 @@ public:
         }
     }
 
+    // Удаление вершины
     void removeVertex(int vertex) {
         adjList.erase(vertex);
         for (auto& [key, neighbors] : adjList) {
@@ -263,10 +259,12 @@ public:
         vertices.erase(vertex);
     }
 
+    // Поиск вершины
     bool findVertex(int vertex) {
         return vertices.find(vertex) != vertices.end();
     }
 
+    // Поиск дуги
     bool findEdge(int from, int to) {
         if (adjList.find(from) != adjList.end()) {
             for (const auto& edge : adjList[from]) {
@@ -278,6 +276,7 @@ public:
         return false;
     }
 
+    // Печать всех дуг
     void printEdges() {
         for (const auto& [vertex, neighbors] : adjList) {
             for (const auto& [to, weight] : neighbors) {
@@ -288,140 +287,30 @@ public:
     }
 };
 
-
-
-void testPerformance() {
-    const int numVertices = 1000000;
-    const int numEdges = 10000000;
-
-    // 1. EdgeListGraph
+// Тестирование реализаций
+void testRealization() {
+    // Тестирование списка дуг (EdgeListGraph)
+    std::cout << "Testing EdgeListGraph...\n";
     EdgeListGraph edgeListGraph;
-    clock_t start = clock();
-
-    // Вставка рёбер
-    for (int i = 0; i < numEdges; ++i) {
-        edgeListGraph.insertEdge(rand() % numVertices, rand() % numVertices, rand() % 100);
-    }
-    std::cout << "EdgeListGraph insertEdge time: " << (clock() - start) << "ms\n";
-
-    // Вставка вершины
-    start = clock();
-    edgeListGraph.insertVertex(1001);
-    std::cout << "EdgeListGraph insertVertex time: " << (clock() - start) << "ms\n";
-
-    // Удаление рёбер
-    start = clock();
-    edgeListGraph.removeEdge(0, 1);
-    std::cout << "EdgeListGraph removeEdge time: " << (clock() - start) << "ms\n";
-
-    // Удаление вершины
-    start = clock();
-    edgeListGraph.removeVertex(0);
-    std::cout << "EdgeListGraph removeVertex time: " << (clock() - start) << "ms\n";
-
-    // Поиск рёбер
-    start = clock();
-    edgeListGraph.findEdge(0, 1);
-    std::cout << "EdgeListGraph findEdge time: " << (clock() - start) << "ms\n";
-
-    // Поиск вершин
-    start = clock();
-    edgeListGraph.findVertex(0);
-    std::cout << "EdgeListGraph findVertex time: " << (clock() - start) << "ms\n";
-
-    // 2. AdjacencyListGraph
-    AdjacencyListGraph adjListGraph;
-    start = clock();
-
-    // Вставка рёбер
-    for (int i = 0; i < numEdges; ++i) {
-        adjListGraph.insertEdge(rand() % numVertices, rand() % numVertices, rand() % 100);
-    }
-    std::cout << "AdjacencyListGraph insertEdge time: " << (clock() - start) << "ms\n";
-
-    // Вставка вершины
-    start = clock();
-    adjListGraph.insertVertex(1001);
-    std::cout << "AdjacencyListGraph insertVertex time: " << (clock() - start) << "ms\n";
-
-    // Удаление рёбер
-    start = clock();
-    adjListGraph.removeEdge(0, 1);
-    std::cout << "AdjacencyListGraph removeEdge time: " << (clock() - start) << "ms\n";
-
-    // Удаление вершины
-    start = clock();
-    adjListGraph.removeVertex(0);
-    std::cout << "AdjacencyListGraph removeVertex time: " << (clock() - start) << "ms\n";
-
-    // Поиск рёбер
-    start = clock();
-    adjListGraph.findEdge(0, 1);
-    std::cout << "AdjacencyListGraph findEdge time: " << (clock() - start) << "ms\n";
-
-    // Поиск вершин
-    start = clock();
-    adjListGraph.findVertex(0);
-    std::cout << "AdjacencyListGraph findVertex time: " << (clock() - start) << "ms\n";
-
-    // 3. BundledEdgeListGraph
-    BundledEdgeListGraph bundledGraph(numVertices);
-    start = clock();
-
-    // Вставка рёбер
-    for (int i = 0; i < numEdges; ++i) {
-        bundledGraph.insertEdge(rand() % numVertices, rand() % numVertices, rand() % 100);
-    }
-    std::cout << "BundledEdgeListGraph insertEdge time: " << (clock() - start) << "ms\n";
-
-    // Вставка вершины
-    start = clock();
-    bundledGraph.insertVertex(1001);
-    std::cout << "BundledEdgeListGraph insertVertex time: " << (clock() - start) << "ms\n";
-
-    // Удаление рёбер
-    start = clock();
-    bundledGraph.removeEdge(0);
-    std::cout << "BundledEdgeListGraph removeEdge time: " << (clock() - start) << "ms\n";
-
-    // Удаление вершины
-    start = clock();
-    bundledGraph.removeVertex(0);
-    std::cout << "BundledEdgeListGraph removeVertex time: " << (clock() - start) << "ms\n";
-
-    // Поиск рёбер
-    start = clock();
-    bundledGraph.findEdge(0, 1);
-    std::cout << "BundledEdgeListGraph findEdge time: " << (clock() - start) << "ms\n";
-
-    // Поиск вершин
-    start = clock();
-    bundledGraph.findVertex(0);
-    std::cout << "BundledEdgeListGraph findVertex time: " << (clock() - start) << "ms\n";
-}
-
-
-int main() {
-    /* Тестирование списка ребер (дуг)
-    EdgeListGraph graph;
 
     // Добавление вершин
-    graph.insertVertex(0);
-    graph.insertVertex(1);
-    graph.insertVertex(2);
+    edgeListGraph.insertVertex(0);
+    edgeListGraph.insertVertex(1);
+    edgeListGraph.insertVertex(2);
 
     // Добавление рёбер
-    graph.insertEdge(0, 1, 5.0);
-    graph.insertEdge(1, 2, 3.0);
-    graph.insertEdge(2, 0, 2.5);
+    edgeListGraph.insertEdge(0, 1, 5.0);
+    edgeListGraph.insertEdge(1, 2, 3.0);
+    edgeListGraph.insertEdge(2, 0, 2.5);
 
     // Печать всех вершин и рёбер
-    graph.printVertices();
-    graph.printEdges();
+    std::cout << "Initial graph:\n";
+    edgeListGraph.printVertices();
+    edgeListGraph.printEdges();
 
     // Поиск вершин и рёбер
-    std::cout << "Vertex 1 exists: " << graph.findVertex(1) << "\n";
-    int index = graph.findEdge(1, 2);
+    std::cout << "Vertex 1 exists: " << edgeListGraph.findVertex(1) << "\n";
+    int index = edgeListGraph.findEdge(1, 2);
     if (index != -1) {
         std::cout << "Edge (1 -> 2) found at index " << index << "\n";
     } else {
@@ -429,59 +318,77 @@ int main() {
     }
 
     // Удаление вершины
-    graph.removeVertex(1);
-    graph.printEdges();
-    graph.printVertices(); */
+    edgeListGraph.removeVertex(1);
+    std::cout << "Graph after removing vertex 1:\n";
+    edgeListGraph.printVertices();
+    edgeListGraph.printEdges();
 
+    // Удаление рёбер
+    edgeListGraph.removeEdge(0, 1); // Удаление рёбра 0 -> 1, если оно существует
+    std::cout << "Graph after removing edge 0 -> 1:\n";
+    edgeListGraph.printEdges();
 
-    /* Тестирование списка пучков дуг
-    BundledEdgeListGraph graph(4); // Инициализация с 4 вершинами
+    // Тестирование списка пучков дуг (BundledEdgeListGraph)
+    std::cout << "\nTesting BundledEdgeListGraph...\n";
+    BundledEdgeListGraph bundledGraph(4); // Инициализация с 4 вершинами
 
     // Вставка рёбер
-    graph.insertEdge(0, 1, 5.0);
-    graph.insertEdge(1, 3, 2.0);
-    graph.insertEdge(1, 2, 4.0);
-    graph.insertEdge(2, 2, 3.0);
-    graph.insertEdge(0, 0, 1.0);
+    bundledGraph.insertEdge(0, 1, 5.0);
+    bundledGraph.insertEdge(1, 3, 2.0);
+    bundledGraph.insertEdge(1, 2, 4.0);
+    bundledGraph.insertEdge(2, 2, 3.0);
+    bundledGraph.insertEdge(0, 0, 1.0);
 
     // Печать вершин и дуг
-    graph.printVertices();
-    graph.printEdges();
+    std::cout << "Initial graph:\n";
+    bundledGraph.printVertices();
+    bundledGraph.printEdges();
 
-    // Поиск и удаление
-    int index = graph.findEdge(1, 3);
+    // Поиск и удаление рёбер
+    index = bundledGraph.findEdge(1, 3);
     if (index != -1) {
         std::cout << "Edge (1 -> 3) found at index " << index << "\n";
     } else {
         std::cout << "Edge (1 -> 3) not found\n";
     }
+    bundledGraph.removeEdge(index); // Удаление найденного рёбра
+    std::cout << "Graph after removing edge 1 -> 3:\n";
+    bundledGraph.printEdges();
 
     // Удаление вершины
-    graph.removeVertex(1);
-    graph.printEdges();
-    graph.printVertices(); */
+    bundledGraph.removeVertex(1);
+    std::cout << "Graph after removing vertex 1:\n";
+    bundledGraph.printVertices();
+    bundledGraph.printEdges();
 
+    // Тестирование списка смежности (AdjacencyListGraph)
+    std::cout << "\nTesting AdjacencyListGraph...\n";
+    AdjacencyListGraph adjListGraph;
 
-    /* Тестирование списка смежности
-    AdjacencyListGraph graph(4); // Инициализируем граф с 4 вершинами
-    graph.insertEdge(0, 1, 5.0);
-    graph.insertEdge(1, 2, 3.0);
-    graph.insertEdge(2, 3, 1.5);
+    // Вставка рёбер
+    adjListGraph.insertEdge(0, 1, 5.0);
+    adjListGraph.insertEdge(1, 2, 3.0);
+    adjListGraph.insertEdge(2, 3, 1.5);
+    adjListGraph.insertEdge(3, 0, 2.0);
 
+    // Печать графа
     std::cout << "Initial graph:\n";
-    graph.printEdges();
+    adjListGraph.printEdges();
 
-    graph.removeEdge(1, 2);  // Удаляем ребро 1 -> 2
-    std::cout << "\nGraph after removing edge 1 -> 2:\n";
-    graph.printEdges();
+    // Поиск рёбер
+    bool edgeExists = adjListGraph.findEdge(1, 2);
+    std::cout << "Edge (1 -> 2) exists: " << edgeExists << "\n";
 
-    graph.removeVertex(2);  // Удаляем вершину 2
-    std::cout << "\nGraph after removing vertex 2:\n";
-    graph.printEdges(); */
+    // Удаление рёбра
+    adjListGraph.removeEdge(1, 2);
+    std::cout << "Graph after removing edge 1 -> 2:\n";
+    adjListGraph.printEdges();
 
-    testPerformance();
+    // Удаление вершины
+    adjListGraph.removeVertex(2);
+    std::cout << "Graph after removing vertex 2:\n";
+    adjListGraph.printEdges();
 
-    return 0;
+    // Проверка поиска вершины
+    std::cout << "Vertex 0 exists: " << adjListGraph.findVertex(0) << "\n";
 }
-
-
