@@ -4,10 +4,12 @@
 #include <unordered_set>
 #include <list>
 #include <chrono>
+#include <random>
+#include <tuple>
 #include <cstdlib>
 
 using namespace std;
-
+using namespace chrono;
 
 // Список дуг
 class EdgeListGraph {
@@ -167,6 +169,19 @@ public:
                 if (head > index) {
                     --head;
                 }
+            }
+        }
+    }
+
+    // Удаление дуги по инцидентным вершинам
+    void removeEdge(int from, int to) {
+        for (int i = H[from]; i != -1;) {
+            if (J[i] == to) {
+                int next = L[i];
+                removeEdge(i);
+                i = next;
+            } else {
+                i = L[i];
             }
         }
     }
@@ -391,4 +406,8 @@ void testRealization() {
 
     // Проверка поиска вершины
     std::cout << "Vertex 0 exists: " << adjListGraph.findVertex(0) << "\n";
+}
+
+int main() {
+    testRealization();
 }
