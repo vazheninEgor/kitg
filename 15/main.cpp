@@ -159,6 +159,22 @@ void dijkstra(const std::vector<std::vector<std::pair<int, int>>>& graph, int st
     }
 }
 
+// Пример использования приоритетной очереди
+void priorityQueueExample() {
+    std::priority_queue<int, std::vector<int>, std::greater<int>> pq; // Min-очередь
+
+    pq.push(10);
+    pq.push(5);
+    pq.push(20);
+
+    std::cout << "Элементы приоритетной очереди (по порядку удаления): ";
+    while (!pq.empty()) {
+        std::cout << pq.top() << " ";
+        pq.pop();
+    }
+    std::cout << std::endl;
+}
+
 // Основная функция для тестирования
 int main() {
     // Тестирование класса Heap
@@ -191,12 +207,15 @@ int main() {
 
     // Тестирование алгоритма Дейкстры
     std::vector<std::vector<std::pair<int, int>>> graph = {
-        {{1, 4}, {2, 1}},
-        {{3, 1}},
-        {{1, 2}, {3, 5}},
-        {}
+            {{1, 4}, {2, 1}},
+            {{3, 1}},
+            {{1, 2}, {3, 5}},
+            {}
     };
     dijkstra(graph, 0);
+
+    // Тестирование приоритетной очереди
+    priorityQueueExample();
 
     return 0;
 }
